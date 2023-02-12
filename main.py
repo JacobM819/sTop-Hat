@@ -1,5 +1,5 @@
 from selenium import webdriver
-from selenium.common import NoSuchWindowException
+from selenium.common import NoSuchWindowException, NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 import time
@@ -11,23 +11,6 @@ def onPage(driver, type, name):
     except:
         return False
     return True
-
-
-def login(driver):
-    element = driver.find_element(By.ID, "select-input-1")
-    element.clear()
-    element.send_keys("American Heritage University")
-    time.sleep(2)
-    element.send_keys(Keys.ENTER)
-    if onPage(driver, By.ID, "username"):
-        element = driver.find_element(By.ID, "username")
-        element.clear()
-        element.send_keys("bryandn1210@gmail.com")
-        element = driver.find_element(By.ID, "password")
-        element.clear()
-        element.send_keys("Ringgold819")
-        time.sleep(2)
-        element.send_keys(Keys.ENTER)
 
 
 def answerQuestion(driver):
@@ -53,25 +36,64 @@ def answerQuestion(driver):
         print("question not found")
 
 
-def run():
-    clock = 1000
-    driver = webdriver.Chrome()
-    driver.get("https://app.tophat.com/")
-    while clock > 0:
-        time.sleep(3)
-        # If on login page
+class Student:
+    def __init__(self, school, email, password, class_code):
+        self.school = school
+        self.email = email
+        self.password = password
+        self.class_code = class_code
+
+    def login(self, driver):
         if onPage(driver, By.ID, "select-input-1"):
-            login(driver)
-            print("logging in")
-            pass
-        # If on question page
-        elif onPage(driver, By.CLASS_NAME, "list-row--unanswered"):
-            answerQuestion(driver)
-            pass
-        else:
-            print("no question found")
-        clock -= 1
-        # driver.refresh()
+            element = driver.find_element(By.ID, "select-input-1")
+            element.clear()
+            element.send_keys(self.school)
+            time.sleep(2)
+            element.send_keys(Keys.ENTER)
+        if onPage(driver, By.CLASS_NAME, "fFskqF"):
+            element = driver.find_element(By.CLASS_NAME, "fFskqF")
+            element.click()
+            time.sleep(3)
+        elif onPage(driver, By.NAME, "loginfmt"):
+            try:
+                element = driver.find_element(By.NAME, "loginfmt")
+                element.clear()
+                element.send_keys(self.email)
+                element.send_keys(Keys.ENTER)
+                time.sleep(2)
+                element = driver.find_element(By.NAME, "passwd")
+                element.clear()
+                element.send_keys(self.password)
+                time.sleep(2)
+                element.send_keys(Keys.ENTER)
+                print("Duo Security")
+                time.sleep(10)
+                if driver.current_url == "https://app.tophat.com/e":
+                    print("At homescreen")
+                    driver.get(f"https://app.tophat.com/e/{self.class_code}")
+            except NoSuchElementException:
+                print("Login not found")
 
 
-run()
+    def runBot(self):
+        clock = 1000
+        driver = webdriver.Chrome()
+        driver.get("https://app.tophat.com/")
+        while clock > 0:
+            time.sleep(3)
+            # If on login page
+            if onPage(driver, By.ID, "select-input-1") or onPage(driver, By.NAME, "loginfmt") or onPage(driver, By.NAME, "passwd"):
+                self.login(driver)
+                print("logging in")
+                pass
+            # If on question page
+            elif onPage(driver, By.CLASS_NAME, "list-row--unanswered"):
+                answerQuestion(driver)
+                pass
+            else:
+                print("no question found")
+            clock -= 1
+
+
+jacob = Student("Pennsylvania State University (Penn State)", "jrm7250@psu.edu", "Ringgold819", "849492")
+jacob.runBot()
