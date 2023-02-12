@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.common import NoSuchWindowException, NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
+from threading import Thread
 import time
 
 
@@ -42,18 +43,22 @@ class Student:
         self.email = email
         self.password = password
         self.class_code = class_code
+        self.thread = Thread(target=self.runBot)
 
     def login(self, driver):
+        # If on TopHat enter school page
         if onPage(driver, By.ID, "select-input-1"):
             element = driver.find_element(By.ID, "select-input-1")
             element.clear()
             element.send_keys(self.school)
-            time.sleep(2)
+            time.sleep(1)
             element.send_keys(Keys.ENTER)
+        # If asked to SSO with school account system
         if onPage(driver, By.CLASS_NAME, "fFskqF"):
             element = driver.find_element(By.CLASS_NAME, "fFskqF")
             element.click()
-            time.sleep(3)
+            time.sleep(2)
+        # If on Outlook login page
         elif onPage(driver, By.NAME, "loginfmt"):
             try:
                 element = driver.find_element(By.NAME, "loginfmt")
@@ -71,31 +76,43 @@ class Student:
             except NoSuchElementException:
                 print("Login not found")
 
-
     def runBot(self):
-        clock = 1000
         driver = webdriver.Chrome()
         driver.get("https://app.tophat.com/")
-        while clock > 0:
-            time.sleep(3)
-            # If on login page
-            if onPage(driver, By.ID, "select-input-1") or onPage(driver, By.NAME, "loginfmt") or onPage(driver, By.NAME, "passwd"):
-                self.login(driver)
-                print("logging in")
-                pass
-            # If there is an unanswered question, answer it
-            elif onPage(driver, By.CLASS_NAME, "list-row--unanswered"):
-                answerQuestion(driver)
-                pass
-            # If at home screen, open requested class
-            elif driver.current_url == "https://app.tophat.com/e":
-                print("At homescreen")
-                driver.get(f"https://app.tophat.com/e/{self.class_code}")
-                pass
-            else:
-                print("no question found")
-            clock -= 1
+        while True:
+            try:
+                time.sleep(3)
+                # If on any stage of the login page
+                if onPage(driver, By.ID, "select-input-1") or onPage(driver, By.NAME, "loginfmt") or onPage(driver, By.NAME, "passwd"):
+                    self.login(driver)
+                    print(f"logging in: {self.email}")
+                    pass
+                # If there is an unanswered question, answer it
+                elif onPage(driver, By.CLASS_NAME, "list-row--unanswered"):
+                    answerQuestion(driver)
+                    pass
+                # If at home screen, open requested class
+                elif driver.current_url == "https://app.tophat.com/e":
+                    print(f"At homescreen: open class {self.class_code}")
+                    driver.get(f"https://app.tophat.com/e/{self.class_code}")
+                    pass
+                else:
+                    print("no question found")
+                    time.sleep(7)
+            # If the browser was closed, quit the program
+            except NoSuchWindowException:
+                print("closing window...")
+                driver.quit()
+                break
+
+    def startMultiBot(self):
+        self.thread.start()
 
 
 jacob = Student("Pennsylvania State University (Penn State)", "jrm7250@psu.edu", "Ringgold819", "849492")
-jacob.runBot()
+# bryan = Student("Pennsylvania State University (Penn State)", "bdn5122@psu.edu", "Ponies#5888", "849492")
+# janel = Student("Pennsylvania State University (Penn State)", "bdn5122@psu.edu", "Ponies#5888", "849492")
+
+jacob.startMultiBot()
+# bryan.startMultiBot()
+# janel.startMultiBot()
