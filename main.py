@@ -68,9 +68,6 @@ class Student:
                 element.send_keys(Keys.ENTER)
                 print("Duo Security")
                 time.sleep(10)
-                if driver.current_url == "https://app.tophat.com/e":
-                    print("At homescreen")
-                    driver.get(f"https://app.tophat.com/e/{self.class_code}")
             except NoSuchElementException:
                 print("Login not found")
 
@@ -86,9 +83,14 @@ class Student:
                 self.login(driver)
                 print("logging in")
                 pass
-            # If on question page
+            # If there is an unanswered question, answer it
             elif onPage(driver, By.CLASS_NAME, "list-row--unanswered"):
                 answerQuestion(driver)
+                pass
+            # If at home screen, open requested class
+            elif driver.current_url == "https://app.tophat.com/e":
+                print("At homescreen")
+                driver.get(f"https://app.tophat.com/e/{self.class_code}")
                 pass
             else:
                 print("no question found")
